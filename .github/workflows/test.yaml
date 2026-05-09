@@ -9,3 +9,5 @@ jobs:
     - run: |
         echo "Public IP: $(curl -s https://api.ipify.org)"
         echo "Local IP: $(hostname -I | awk '{print $1}')"
+    - name: Wait 10 seconds
+      run: sleep 10
