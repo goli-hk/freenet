@@ -1,13 +1,11 @@
 name: Get Runner IP
-
-on: [push]
-
+on: [workflow_dispatch]  # Manual trigger to test
 jobs:
   ip:
     runs-on: ubuntu-latest
     steps:
-    - run: |
-        echo "Public IP: $(curl -s https://api.ipify.org)"
-        echo "Local IP: $(hostname -I | awk '{print $1}')"
-    - name: Wait 10 seconds
-      run: sleep 10
+      - uses: actions/checkout@v4
+      - run: |
+          echo "Public IP: $(curl -s https://api.ipify.org)"
+          echo "Local IP: $(hostname -I | awk '{print $1}')"
+      - run: sleep 10
