@@ -6,24 +6,48 @@ on:
 jobs:
   get-ip:
     runs-on: ubuntu-latest
-    outputs:
-      ip: ${{ steps.get-ip.outputs.ip }}
     
     steps:
-      - name: Get Public IP
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Create output directory
+        run: mkdir -p ip-logs
+        
+      - name: Get Public IP and save logs
         id: get-ip
         run: |
-          IP=$(curl -s https://api.ipify.org)
+          echo "=== Runner Public IP Check ===" | tee ip-logs/complete-log.txt
+          echo "Timestamp: $(date)" | tee -a ip-logs/complete-log.txt
+          echo "" | tee -a ip-logs/complete-log.txt
+          
+          echo "Fetching IP from api.ipify.org..." | tee -a ip-logs/complete-log.txt
+          IP=$(curl -s https://api.ipify.org 2>&1 | tee -a ip-logs/complete-log.txt)
+          echo "" | tee -a ip-logs/complete-log.txt
+          
+          echo "Runner Public IP: $IP" | tee -a ip-logs/complete-log.txt
           echo "ip=$IP" >> $GITHUB_OUTPUT
-          echo "Runner Public IP: $IP"
+          echo "" | tee -a ip-logs/complete-log.txt
+          
+          echo "Fetching detailed info from ipinfo.io..." | tee -a ip-logs/complete-log.txt
+          curl -s https://ipinfo.io 2>&1 | tee -a ip-logs/complete-log.txt
+          echo "" | tee -a ip-logs/complete-log.txt
+          
+          echo "=== End of Log ===" | tee -a ip-logs/complete-log.txt
           
       - name: Save IP to file
+        run: echo "${{ steps.get-ip.outputs.ip }}" > ip-logs/runner-ip.txt
+        
+      - name: Commit and push to repository
         run: |
-          echo "${{ steps.get-ip.outputs.ip }}" > runner-ip.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ip-logs/
+          git commit -m "Add runner IP logs - $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push || echo "Push failed"
           
-      - name: Upload IP as artifact
+      - name: Upload as artifact (backup)
         uses: actions/upload-artifact@v4
         with:
-          name: runner-ip
-          path: runner-ip.txt
-  
+          name: ip-logs
+          path: ip-logs/
