@@ -1,10 +1,29 @@
-name: Get Runner IP
-on: [workflow_dispatch]
+name: Get Runner Public IP
+
+on:
+  workflow_dispatch:
+
 jobs:
-  ip:
+  get-ip:
     runs-on: ubuntu-latest
+    outputs:
+      ip: ${{ steps.get-ip.outputs.ip }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Public IP $(curl -s https://api.ipify.org)"
-      - run: echo "Local IP $(hostname -I | cut -d' ' -f1)"
-      - run: sleep 10
+      - name: Get Public IP
+        id: get-ip
+        run: |
+          IP=$(curl -s https://api.ipify.org)
+          echo "ip=$IP" >> $GITHUB_OUTPUT
+          echo "Runner Public IP: $IP"
+          
+      - name: Save IP to file
+        run: |
+          echo "${{ steps.get-ip.outputs.ip }}" > runner-ip.txt
+          
+      - name: Upload IP as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-ip
+          path: runner-ip.txt
+  
